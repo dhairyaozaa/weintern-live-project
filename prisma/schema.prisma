@@ -1,0 +1,361 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Project-specific name so a globally exported DATABASE_URL (other projects'
+  // shells/CI) can never silently point TicketFlow at the wrong database.
+  url      = env("TICKETFLOW_DATABASE_URL")
+}
+
+// ─────────────────────────── Users & organizers ───────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  ORGANIZER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          UserRole  @default(CUSTOMER)
+  phone         String?
+  createdAt     DateTime  @default(now())
+
+  organizedEvents     Event[]
+  bookings            Booking[]
+  notifications       Notification[]
+  organizerProfile    OrganizerProfile?
+  moderationActions   AuditLog[]        @relation("AuditActor")
+  couponUsages        CouponUsage[]
+  signins             SignIn[]
+}
+
+model OrganizerProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  orgName        String
+  about          String?
+  supportEmail   String?
+  supportPhone   String?
+  upiId          String?
+  status         OrganizerStatus @default(PENDING)
+  platformFeeBps Int      @default(500) // organizer-level override of commission, basis points
+  createdAt      DateTime @default(now())
+
+  events Event[]
+}
+
+enum OrganizerStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model SignIn {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────── Events & inventory ───────────────────────────
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum PricingMode {
+  STATIC
+  EARLY_BIRD // auto price steps before a cutoff
+  DEMAND     // manual per-tier price revision with floor
+}
+
+model Event {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  title         String
+  description   String
+  category      String
+  bannerUrl     String?
+  venueName     String
+  city          String
+  address       String?
+  startsAt      DateTime
+  endsAt        DateTime
+  status        EventStatus @default(DRAFT)
+  pricingMode   PricingMode @default(STATIC)
+  earlyBirdEnds DateTime?
+  liveMode      Boolean     @default(false) // "happening now" toggle on event day
+  soldOut       Boolean     @default(false)
+  viewCount     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  organizerId String
+  organizer   User        @relation(fields: [organizerId], references: [id])
+  profile     OrganizerProfile? @relation(fields: [profileId], references: [id])
+  profileId   String?
+
+  tiers        TicketTier[]
+  bookings     Booking[]
+  coupons      Coupon[]
+  waitlist     WaitlistEntry[]
+  broadcasts   Broadcast[]
+}
+
+model TicketTier {
+  id           String  @id @default(cuid())
+  eventId      String
+  event        Event   @relation(fields: [eventId], references: [id])
+  name         String // e.g. Silver / Gold / VIP
+  description  String?
+  pricePs      Int // current price in paise
+  basePricePs  Int // STATIC reference price
+  capacity     Int
+  sold         Int     @default(0) // confirmed paid
+  heldCount    Int     @default(0) // active reservations (derived; kept in sync on hold/release)
+  perUserLimit Int     @default(6)
+  dynamicFloorPs Int   @default(0) // DEMAND mode: never price below floor
+  position     Int     @default(0)
+
+  reservations Reservation[]
+  tickets      Ticket[]
+  waitlist     WaitlistEntry[]
+
+  @@unique([eventId, name])
+}
+
+// Temporary reservation during checkout (inventory hold)
+model Reservation {
+  id         String   @id @default(cuid())
+  tierId     String
+  tier       TicketTier @relation(fields: [tierId], references: [id])
+  userId     String
+  quantity   Int
+  expiresAt  DateTime
+  consumed   Boolean  @default(false)
+  released   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  booking Booking?
+}
+
+// ─────────────────────────── Coupons ───────────────────────────
+
+enum DiscountType {
+  PERCENT
+  FLAT
+}
+
+enum CouponScope {
+  GLOBAL
+  EVENT
+}
+
+model Coupon {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  scope        CouponScope  @default(GLOBAL)
+  eventId      String?
+  event        Event?       @relation(fields: [eventId], references: [id])
+  discountType DiscountType
+  value        Int // PERCENT: 1-100, FLAT: paise
+  maxDiscountPs Int?
+  minOrderPs   Int          @default(0)
+  maxRedemptions Int?
+  redemptionCount Int       @default(0)
+  perUserLimit Int          @default(1)
+  active       Boolean      @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  usages CouponUsage[]
+}
+
+model CouponUsage {
+  id       String @id @default(cuid())
+  couponId String
+  coupon   Coupon @relation(fields: [couponId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  bookingId String?
+  createdAt DateTime @default(now())
+
+  @@unique([couponId, userId, bookingId])
+}
+
+// ─────────────────────────── Bookings, payments, tickets ───────────────────────────
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  reference  String        @unique
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  eventId    String
+  event      Event         @relation(fields: [eventId], references: [id])
+  status     BookingStatus @default(PENDING_PAYMENT)
+  subtotalPs Int
+  discountPs Int           @default(0)
+  feePs      Int           @default(0) // platform commission portion
+  totalPs    Int
+  couponId   String?
+  reservationId String?    @unique
+  reservation  Reservation? @relation(fields: [reservationId], references: [id])
+  contactEmail String
+  contactPhone String?
+
+  payments   Payment[]
+  tickets    Ticket[]
+  refunds    Refund[]
+  invoiceNo  String? @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  bookingId   String
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  provider    String // MOCK | RAZORPAY
+  orderId     String?       @unique
+  paymentRef  String?       @unique // provider payment id
+  signature   String?
+  amountPs    Int
+  status      PaymentStatus @default(CREATED)
+  method      String?
+  failureReason String?
+  rawPayload  Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum RefundStatus {
+  REQUESTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Refund {
+  id          String       @id @default(cuid())
+  bookingId   String
+  booking     Booking      @relation(fields: [bookingId], references: [id])
+  amountPs    Int
+  reason      String?
+  status      RefundStatus @default(COMPLETED)
+  providerRef String?
+  processedBy String?
+  createdAt   DateTime     @default(now())
+}
+
+model Ticket {
+  id         String   @id @default(cuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  tierId     String
+  tier       TicketTier @relation(fields: [tierId], references: [id])
+  attendee   String?
+  qrPayload  String   @unique // signed token, verified at gate
+  seatLabel  String?  // e.g. G-014
+  checkedInAt DateTime?
+  checkedInBy String?
+  createdAt  DateTime @default(now())
+}
+
+// ─────────────────────────── Waitlist ───────────────────────────
+
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  tierId    String?
+  tier      TicketTier? @relation(fields: [tierId], references: [id])
+  userId    String
+  quantity  Int      @default(2)
+  notifiedAt DateTime?
+  convertedBookingId String?
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+// ─────────────────────────── Notifications & broadcasts ───────────────────────────
+
+enum NotificationKind {
+  SYSTEM
+  BOOKING
+  WAITLIST
+  EVENT_UPDATE
+  TICKET
+}
+
+model Notification {
+  id     String           @id @default(cuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id])
+  kind   NotificationKind @default(SYSTEM)
+  title  String
+  body   String
+  link   String?
+  readAt DateTime?
+  createdAt DateTime      @default(now())
+}
+
+model Broadcast {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────── Platform settings ───────────────────────────
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────── Audit log ───────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}

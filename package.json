@@ -1,0 +1,47 @@
+{
+  "name": "ticketflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Event ticketing marketplace: discovery, inventory, payments, QR check-in, analytics",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "predev": "node scripts/db.mjs ensure",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:up": "node scripts/db.mjs ensure",
+    "db:reset": "node scripts/db.mjs reset",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "5.16.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "jose": "^5.6.3",
+    "lucide-react": "^0.400.0",
+    "next": "14.2.5",
+    "qrcode": "^1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "recharts": "^2.12.7",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "2.4.6",
+    "@types/node": "20.14.9",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "bcryptjs": "^2.4.3",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "postcss": "8.4.39",
+    "prisma": "5.16.1",
+    "puppeteer-core": "^25.10.0",
+    "tailwindcss": "3.4.4",
+    "tsx": "4.16.2",
+    "typescript": "5.4.5"
+  }
+}
