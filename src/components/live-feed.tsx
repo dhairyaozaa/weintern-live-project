@@ -154,14 +154,11 @@ export function LiveFeed({ initial }: { initial: FeedItem[] }) {
     <section>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
-          </span>
+          <span className="inline-block h-2 w-2 bg-zinc-900 shrink-0" />
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Happening right now
           </h2>
-          <span className="badge-green hidden sm:inline-flex">live</span>
+          <span className="text-xs font-bold text-zinc-800 bg-zinc-100 border border-zinc-200 rounded px-2 py-0.5 uppercase tracking-wider hidden sm:inline-flex">live</span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -194,7 +191,7 @@ export function LiveFeed({ initial }: { initial: FeedItem[] }) {
               className="anim-feed-chip card flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-xs transition hover:border-brand-300 dark:hover:border-brand-500/60 hover:shadow-card"
               style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
             >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-zinc-100 text-[10px] font-bold text-zinc-900">
                 {initials(b.name)}
               </span>
               <span>

@@ -2,6 +2,51 @@
 import { spawn, exec } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
+import { Client } from "pg";
+
+const ROOT = process.cwd();
+const DATA_DIR = path.join(ROOT, ".pgdata");
+const PORT = Number(process.env.PGPORT || 5434);
+
+async function canAuth() {
+  const c = new Client({
+    host: "127.0.0.1",
+    port: PORT,
+    user: "ticketflow",
+    password: "ticketflow",
+    database: "ticketflow",
+    connectionTimeoutMillis: 2000,
+  });
+  try {
+    await c.connect();
+    await c.query("SELECT 1");
+    await c.end();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+let dbChild = null;
+if (!(await canAuth())) {
+  const pidFile = path.join(DATA_DIR, "postmaster.pid");
+  if (fs.existsSync(pidFile)) {
+    try { fs.unlinkSync(pidFile); } catch {}
+  }
+  dbChild = spawn(process.execPath, [path.join(ROOT, "scripts", "db-serve.mjs")], {
+    cwd: ROOT,
+    stdio: "inherit",
+    env: process.env,
+  });
+  const t0 = Date.now();
+  while (!(await canAuth())) {
+    if (Date.now() - t0 > 45000) {
+      console.error("Postgres did not start in time");
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+}
 
 const POLL_MS = 500;
 const OPEN_FALLBACK_MS = 10_000;
@@ -80,7 +125,7 @@ async function pollAndOpen() {
       return;
     }
     if (Date.now() - t0 > 180_000) {
-      console.warn("⚠ Server did not respond in 3 minutes; opening the browser anyway.");
+      console.warn("⚠️ Server did not respond in 3 minutes; opening the browser anyway.");
       openBrowser(url);
       return;
     }
@@ -90,6 +135,23 @@ async function pollAndOpen() {
 
 pollAndOpen().catch(() => {});
 
+function cleanup() {
+  if (dbChild) {
+    try { dbChild.kill("SIGINT"); } catch {}
+  }
+}
+
 child.on("exit", (code, signal) => {
+  cleanup();
   process.exit(signal ? 1 : (code ?? 0));
+});
+
+process.on("SIGINT", () => {
+  cleanup();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  cleanup();
+  process.exit(0);
 });

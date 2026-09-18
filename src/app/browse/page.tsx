@@ -2,9 +2,9 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Filter, Search, X } from "lucide-react";
-import { EventCard, type EventCardData } from "@/components/event-card";
-import { CATEGORIES, CATEGORY_EMOJI } from "@/lib/format";
+import { Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { EventCard, type EventCardData, CategoryIcon } from "@/components/event-card";
+import { CATEGORIES } from "@/lib/format";
 import { Spinner, EmptyState } from "@/components/ui";
 
 type ApiEvent = EventCardData & { maxPricePs?: number; viewCount?: number };
@@ -54,73 +54,109 @@ function BrowseInner() {
   const pages = Math.ceil(total / 20);
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold">Browse events</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{total} upcoming events</p>
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-zinc-200/80 pb-5">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-900">Browse Events</h1>
+          <p className="text-sm sm:text-base text-zinc-600 mt-1.5">{total} upcoming live events available</p>
+        </div>
+        <div className="text-sm text-zinc-500 font-semibold">
+          Instant QR check-in & verified passes
+        </div>
       </div>
 
       {/* Search + filter bar */}
-      <div className="card space-y-3 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+      <div className="card space-y-4 p-5 sm:p-6 bg-white border border-zinc-200/80 rounded-2xl shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[240px] flex-1">
+            <Search className="absolute left-3.5 top-3.5 h-5 w-5 text-zinc-400" />
             <input
               value={q}
               onChange={(e) => { setQ(e.target.value); setPage(1); }}
-              placeholder="Search events, venues, cities…"
-              className="input pl-9"
+              placeholder="Search by artist, event title, venue, or city..."
+              className="input pl-11 text-sm sm:text-base py-3 rounded-xl"
             />
           </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="input w-auto">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="input w-auto text-sm sm:text-base py-3 rounded-xl"
+          >
             <option value="soon">Starting soon</option>
-            <option value="price">Price: low → high</option>
+            <option value="price">Price: low to high</option>
             <option value="popular">Most viewed</option>
           </select>
-          <button className="btn-secondary lg:hidden" onClick={() => setShowFilters(!showFilters)}>
+          <button
+            type="button"
+            className="btn btn-secondary lg:hidden text-sm py-3 px-4 rounded-xl"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="h-4 w-4" /> Filters
           </button>
         </div>
 
-        <div className={`${showFilters ? "space-y-3" : "hidden lg:block"} space-y-3`}>
-          <div className="scroll-thin flex gap-1.5 overflow-x-auto pb-1">
+        {/* Category Pills & Filters */}
+        <div className={`${showFilters ? "space-y-4" : "hidden lg:block"} space-y-4 pt-3 border-t border-zinc-100`}>
+          <div className="flex gap-2.5 overflow-x-auto pb-1.5">
             <button
               onClick={() => { setCategory("all"); setPage(1); }}
-              className={`chip border ${category === "all" ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+              className={`chip border text-sm font-semibold py-1.5 px-4 rounded-xl transition ${
+                category === "all"
+                  ? "border-zinc-900 bg-zinc-900 text-white font-bold shadow-xs"
+                  : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+              }`}
             >
-              All
+              All Categories
             </button>
             {CATEGORIES.map((c) => (
               <button
                 key={c}
                 onClick={() => { setCategory(c); setPage(1); }}
-                className={`chip whitespace-nowrap border ${category === c ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                className={`chip whitespace-nowrap border text-sm font-semibold py-1.5 px-4 rounded-xl flex items-center gap-2 transition ${
+                  category === c
+                    ? "border-zinc-900 bg-zinc-900 text-white font-bold shadow-xs"
+                    : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                }`}
               >
-                {CATEGORY_EMOJI[c]} {c}
+                <CategoryIcon category={c} className="h-4 w-4" />
+                <span>{c}</span>
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <select value={city} onChange={(e) => { setCity(e.target.value); setPage(1); }} className="input w-auto">
-              {CITIES.map((c) => <option key={c} value={c}>{c === "all" ? "All cities" : c}</option>)}
+
+          <div className="flex flex-wrap items-center gap-3.5 text-sm pt-1">
+            <select
+              value={city}
+              onChange={(e) => { setCity(e.target.value); setPage(1); }}
+              className="input w-auto text-sm py-2 px-3.5 rounded-lg"
+            >
+              {CITIES.map((c) => (
+                <option key={c} value={c}>{c === "all" ? "All cities" : c}</option>
+              ))}
             </select>
-            <div className="flex gap-1">
+
+            <div className="flex gap-2">
               {WHEN.map(([v, label]) => (
                 <button
                   key={v}
                   onClick={() => { setWhen(v); setPage(1); }}
-                  className={`chip border ${when === v ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                  className={`chip border text-sm font-semibold py-1.5 px-3.5 rounded-lg transition ${
+                    when === v
+                      ? "border-zinc-900 bg-zinc-900 text-white font-bold"
+                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                  }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
+
             {(q || category !== "all" || city !== "all" || when !== "all") && (
               <button
                 onClick={() => { setQ(""); setCategory("all"); setCity("all"); setWhen("all"); }}
-                className="btn-ghost text-xs"
+                className="btn btn-ghost text-sm text-zinc-600 hover:text-zinc-900 py-1.5 px-3"
               >
-                <X className="h-3.5 w-3.5" /> Clear
+                <X className="h-4 w-4 mr-1" /> Reset Filters
               </button>
             )}
           </div>
@@ -128,22 +164,42 @@ function BrowseInner() {
       </div>
 
       {loading ? (
-        <Spinner label="Finding events…" />
+        <Spinner label="Searching events..." />
       ) : events.length === 0 ? (
-        <EmptyState title="No events found" body="Try different filters or check back soon — organizers publish new events daily." />
+        <EmptyState
+          title="No events matching criteria"
+          body="Try adjusting your keywords or clearing category and city filters to find more events."
+        />
       ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {events.map((e, i) => <EventCard key={e.slug} event={e} index={i} />)}
+        <div className="space-y-8">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {events.map((e, i) => (
+              <EventCard key={e.slug} event={e} index={i} />
+            ))}
           </div>
+
           {pages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>← Prev</button>
-              <span className="text-sm text-slate-500 dark:text-slate-400">Page {page} of {pages}</span>
-              <button className="btn-secondary" disabled={page >= pages} onClick={() => setPage(page + 1)}>Next →</button>
+            <div className="flex items-center justify-center gap-4 pt-6 border-t border-zinc-200/80">
+              <button
+                className="btn btn-secondary text-sm py-2 px-4"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+              </button>
+              <span className="text-sm font-bold text-zinc-700">
+                Page {page} of {pages}
+              </span>
+              <button
+                className="btn btn-secondary text-sm py-2 px-4"
+                disabled={page >= pages}
+                onClick={() => setPage(page + 1)}
+              >
+                Next <ChevronRight className="h-4 w-4 ml-1" />
+              </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -151,7 +207,7 @@ function BrowseInner() {
 
 export default function BrowsePage() {
   return (
-    <Suspense fallback={<Spinner label="Loading events…" />}>
+    <Suspense fallback={<Spinner label="Loading events..." />}>
       <BrowseInner />
     </Suspense>
   );

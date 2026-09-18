@@ -3,13 +3,13 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
-import { Toast } from "@/components/ui";
+import { Loader2, User, Building2, Shield, ArrowRight } from "lucide-react";
+import { Toast, Spinner } from "@/components/ui";
 
 const DEMO_ACCOUNTS = [
-  { label: "👤 Customer demo", email: "customer@demo.io" },
-  { label: "🎪 Organizer demo", email: "organizer@demo.io" },
-  { label: "🛡️ Admin demo", email: "admin@demo.io" },
+  { role: "Customer", email: "customer@demo.io", icon: User },
+  { role: "Organizer", email: "organizer@demo.io", icon: Building2 },
+  { role: "Admin", email: "admin@demo.io", icon: Shield },
 ];
 
 function LoginInner() {
@@ -32,7 +32,7 @@ function LoginInner() {
         body: JSON.stringify(creds ?? { email, password }),
       });
       const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Login failed");
+      if (!res.ok) throw new Error(d.error || "Authentication failed");
       const role = d.user.role as string;
       if (next !== "/") router.push(next);
       else if (role === "ADMIN") router.push("/admin");
@@ -40,51 +40,96 @@ function LoginInner() {
       else router.push("/browse");
       router.refresh();
     } catch (err) {
-      setToast({ msg: err instanceof Error ? err.message : "Login failed", tone: "error" });
+      setToast({ msg: err instanceof Error ? err.message : "Authentication failed", tone: "error" });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4">
-      <div className="card p-6">
-        <h1 className="text-xl font-extrabold">Welcome back</h1>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Sign in to book tickets and manage events</p>
-        {toast && <div className="mb-3"><Toast message={toast.msg} tone={toast.tone} /></div>}
-        <form onSubmit={submit} className="space-y-3">
+    <div className="mx-auto max-w-md space-y-5 py-6">
+      <div className="card p-6 sm:p-8 bg-white border border-zinc-200/80 shadow-card space-y-4">
+        <div className="flex items-center gap-3.5 pb-2 border-b border-zinc-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="TicketFlow" className="h-11 w-11 object-contain rounded-xl shadow-xs shrink-0" />
           <div>
-            <label className="label">Email</label>
-            <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900">Sign in</h1>
+            <p className="mt-0.5 text-xs text-zinc-500">Access your digital tickets, saved events, and organizer tools</p>
           </div>
+        </div>
+
+        {toast && <Toast message={toast.msg} tone={toast.tone} />}
+
+        <form onSubmit={submit} className="space-y-3.5 pt-1">
+          <div>
+            <label className="label">Email address</label>
+            <input
+              className="input text-xs"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </div>
+
           <div>
             <label className="label">Password</label>
-            <input className="input" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            <input
+              className="input text-xs"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
           </div>
-          <button className="btn-primary w-full" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />} Sign in
+
+          <button
+            type="submit"
+            className="btn btn-primary w-full text-xs font-semibold py-2.5 mt-2"
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+            Sign In to Account
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          New here? <Link href="/register" className="font-semibold text-brand-700 dark:text-brand-300 hover:underline">Create an account</Link>
-        </p>
-      </div>
 
-      <div className="card p-4">
-        <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Demo accounts (one-click)</div>
-        <div className="grid gap-2">
-          {DEMO_ACCOUNTS.map((acc) => (
-            <button
-              key={acc.email}
-              className="btn-secondary justify-between"
-              disabled={loading}
-              onClick={() => submit(undefined, { email: acc.email, password: "Password@123" })}
-            >
-              <span>{acc.label}</span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">{acc.email}</span>
-            </button>
-          ))}
-          <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">All demo passwords: Password@123</p>
+        {/* Demo Fast Logins */}
+        <div className="border-t border-zinc-100 pt-4 space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            Quick One-Click Demo Sign-in
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {DEMO_ACCOUNTS.map((acc) => {
+              const Icon = acc.icon;
+              return (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(acc.email);
+                    setPassword("Password@123");
+                    submit(undefined, { email: acc.email, password: "Password@123" });
+                  }}
+                  className="flex flex-col items-center justify-center p-2.5 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition text-center group"
+                >
+                  <Icon className="h-4 w-4 text-zinc-600 group-hover:text-zinc-900 mb-1" />
+                  <span className="text-xs font-bold text-zinc-900">{acc.role}</span>
+                  <span className="text-[10px] text-zinc-400 font-mono mt-0.5 truncate max-w-full">
+                    demo
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="pt-2 text-center text-xs text-zinc-500">
+          New to TicketFlow?{" "}
+          <Link href="/register" className="font-semibold text-zinc-900 underline underline-offset-2">
+            Create an account
+          </Link>
         </div>
       </div>
     </div>
@@ -93,7 +138,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<Spinner label="Loading sign-in..." />}>
       <LoginInner />
     </Suspense>
   );

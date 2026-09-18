@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIES, CATEGORY_EMOJI } from "@/lib/format";
-import { EventCard } from "@/components/event-card";
+import { CATEGORIES } from "@/lib/format";
+import { EventCard, CategoryIcon } from "@/components/event-card";
 import { LiveFeed } from "@/components/live-feed";
 import { Reveal } from "@/components/reveal";
+import { ArrowRight, ShieldCheck, Zap, QrCode, Search, Ticket } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -53,109 +54,210 @@ export default async function HomePage() {
   const [events, users, bookings] = counts;
 
   return (
-    <div className="space-y-12">
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-purple-600 p-8 text-white shadow-pop md:p-12">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-purple-400/30 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-brand-400/20 blur-3xl"
-        />
+    <div className="space-y-14 pb-12">
+      {/* Editorial Architectural Hero with Background */}
+      <section className="relative overflow-hidden rounded-3xl border border-zinc-200/90 p-8 sm:p-12 lg:p-14 shadow-card">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hero-bg.png"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover object-center"
+          />
+          {/* High-visibility tuned overlay: Minimal gradient on text side, rich vibrant artwork visibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/70 via-white/25 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-transparent" />
+        </div>
 
-        <div className="relative max-w-2xl">
-          <div className="anim-hero-3 chip mb-4 bg-white/15 text-white ring-1 ring-inset ring-white/25">
-            🎟️ Real-time ticketing marketplace
-          </div>
-          <h1 className="anim-hero text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
-            Discover events. Book in seconds.
-            <br />
-            <span className="bg-gradient-to-r from-brand-200 to-purple-200 bg-clip-text text-transparent">
-              Walk in with a QR pass.
-            </span>
-          </h1>
-          <p className="anim-hero-2 mt-4 max-w-xl text-sm text-brand-100 md:text-base">
-            Live availability, 10-minute seat holds, secure payments, instant digital tickets and
-            organizer check-in tools — the full lifecycle in one place.
-          </p>
-          <div className="anim-hero-2 mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/browse"
-              className="btn bg-white text-brand-700 shadow-sm transition hover:bg-brand-50 hover:shadow-md"
-            >
-              Browse events →
-            </Link>
-            <Link
-              href="/organizer/onboarding"
-              className="btn border border-white/40 text-white transition hover:bg-white/10"
-            >
-              Host an event
-            </Link>
-          </div>
-          <div className="anim-hero-3 mt-8 flex divide-x divide-white/20 gap-6 text-sm [&>*]:pr-6 [&>*:first-child]:pl-0">
-            <div>
-              <div className="text-2xl font-extrabold tabular-nums">{events}</div>
-              <div className="text-brand-200">live events</div>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+          {/* Left Column: Mission & CTAs */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white/95 backdrop-blur px-3.5 py-1.5 text-sm font-bold text-zinc-800 shadow-2xs">
+              <span className="inline-block h-2 w-2 bg-zinc-900 shrink-0" />
+              Live Marketplace · Cryptographic QR Passes
             </div>
-            <div className="pl-6">
-              <div className="text-2xl font-extrabold tabular-nums">{users}</div>
-              <div className="text-brand-200">members</div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-900 leading-[1.1]">
+              Discover live events.
+              <br />
+              <span className="text-zinc-500 font-bold">Book seats in seconds.</span>
+            </h1>
+
+            <p className="max-w-xl text-base sm:text-lg leading-relaxed text-zinc-800 font-medium">
+              Direct access to live festivals, tech summits, concerts, and cultural experiences.
+              Atomic 10-minute seat reservations ensure zero overselling and seamless gate check-in.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <Link
+                href="/browse"
+                className="btn btn-primary px-6 py-3 text-base font-bold shadow-sm"
+              >
+                Browse All Events
+                <ArrowRight className="h-5 w-5 ml-1.5" />
+              </Link>
+              <Link
+                href="/organizer/onboarding"
+                className="btn btn-secondary px-6 py-3 text-base font-bold"
+              >
+                Host an Event
+              </Link>
             </div>
-            <div className="pl-6">
-              <div className="text-2xl font-extrabold tabular-nums">{bookings}</div>
-              <div className="text-brand-200">tickets booked</div>
+          </div>
+
+          {/* Right Column: Platform Metrics & Guarantees */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="rounded-2xl border border-zinc-200/90 bg-white/90 backdrop-blur-md p-7 space-y-6 shadow-sm">
+              <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Network Activity
+              </div>
+              <div className="grid grid-cols-3 gap-4 divide-x divide-zinc-200 text-center">
+                <div className="space-y-1.5">
+                  <div className="text-3xl sm:text-4xl font-black text-zinc-900 tabular-nums">
+                    {events}
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-600">Live Events</div>
+                </div>
+                <div className="space-y-1.5 pl-4">
+                  <div className="text-3xl sm:text-4xl font-black text-zinc-900 tabular-nums">
+                    {users}
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-600">Members</div>
+                </div>
+                <div className="space-y-1.5 pl-4">
+                  <div className="text-3xl sm:text-4xl font-black text-zinc-900 tabular-nums">
+                    {bookings}
+                  </div>
+                  <div className="text-xs sm:text-sm font-semibold text-zinc-600">Tickets Issued</div>
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-200/70 pt-5 space-y-3 text-sm text-zinc-700 font-medium">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+                  <span>Verified organizer payout protections</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Zap className="h-5 w-5 text-amber-600 shrink-0" />
+                  <span>Sub-second instant QR pass generation</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Real-Time Booking Ticker */}
       <LiveFeed initial={initialBookings} />
 
+      {/* Category Endless Connected Square Table Marquee */}
       <Reveal>
-        <section>
-          <h2 className="mb-3 text-xl font-extrabold tracking-tight">Browse by category</h2>
-          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5 lg:grid-cols-9">
-            {CATEGORIES.map((c) => (
-              <Link
-                key={c}
-                href={`/browse?category=${encodeURIComponent(c)}`}
-                className="card group flex flex-col items-center gap-1.5 p-4 text-center transition hover:-translate-y-0.5 hover:border-brand-300 dark:hover:border-brand-500/60 hover:shadow-pop"
-              >
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-50 dark:bg-brand-500/15 text-xl transition group-hover:scale-110">
-                  {CATEGORY_EMOJI[c]}
-                </span>
-                <span className="text-xs font-semibold">{c}</span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                  {categoryCounts.get(c) ?? 0} event{(categoryCounts.get(c) ?? 0) === 1 ? "" : "s"}
-                </span>
-              </Link>
-            ))}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-block h-2 w-2 bg-zinc-900 shrink-0" />
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-zinc-900">
+                Browse by Category
+              </h2>
+            </div>
+            <Link
+              href="/browse"
+              className="text-sm font-bold text-zinc-600 hover:text-zinc-900 transition flex items-center gap-1.5"
+            >
+              See all
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {/* Endless Connected Square Table Marquee Track with Dotted Line Beam Nodes */}
+          <div className="relative w-full overflow-hidden rounded-2xl border-2 border-dotted border-zinc-300 bg-white shadow-sm">
+            {/* Top and Bottom Animated Beams */}
+            <div className="pointer-events-none absolute -top-[1px] left-0 right-0 h-[2px] overflow-hidden z-20">
+              <div className="h-full w-56 bg-gradient-to-r from-transparent via-zinc-900/70 to-transparent animate-beam" />
+            </div>
+            <div className="pointer-events-none absolute -bottom-[1px] left-0 right-0 h-[2px] overflow-hidden z-20">
+              <div className="h-full w-56 bg-gradient-to-r from-transparent via-zinc-900/70 to-transparent animate-beam [animation-delay:2.5s]" />
+            </div>
+
+            {/* Corner Beam Nodes */}
+            <span className="absolute -top-1 -left-1 h-2 w-2 bg-zinc-900 z-30" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 bg-zinc-900 z-30" />
+            <span className="absolute -bottom-1 -left-1 h-2 w-2 bg-zinc-900 z-30" />
+            <span className="absolute -bottom-1 -right-1 h-2 w-2 bg-zinc-900 z-30" />
+
+            {/* Edge Fade Gradients */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
+
+            <div className="animate-table-marquee flex items-stretch">
+              {[...CATEGORIES, ...CATEGORIES, ...CATEGORIES, ...CATEGORIES].map((c, idx) => {
+                const count = categoryCounts.get(c) ?? 0;
+                return (
+                  <Link
+                    key={`${c}-${idx}`}
+                    href={`/browse?category=${encodeURIComponent(c)}`}
+                    className="group relative flex aspect-square w-36 h-36 sm:w-44 sm:h-44 shrink-0 flex-col justify-between border-r-2 border-dotted border-zinc-300 bg-white p-4 sm:p-5 transition-all duration-150 hover:bg-zinc-50 select-none"
+                  >
+                    {/* Top Row: Event Count (Dot Removed) */}
+                    <div className="flex items-center justify-end">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-zinc-700 transition">
+                        {count} {count === 1 ? "event" : "events"}
+                      </span>
+                    </div>
+
+                    {/* Center: Category Icon */}
+                    <div className="my-auto flex flex-col items-center justify-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 text-zinc-800 transition duration-150 group-hover:bg-zinc-900 group-hover:text-white group-hover:scale-105 shadow-xs">
+                        <CategoryIcon category={c} className="h-6 w-6 stroke-[1.5]" />
+                      </div>
+                    </div>
+
+                    {/* Bottom: Category Name & Arrow Indicator */}
+                    <div className="flex items-center justify-between pt-2 border-t border-dotted border-zinc-200">
+                      <span className="text-sm font-extrabold tracking-tight text-zinc-900 group-hover:text-black">
+                        {c}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-zinc-400 opacity-0 -translate-x-1 transition duration-150 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-zinc-900" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </section>
       </Reveal>
 
+      {/* Featured Upcoming Events */}
       <Reveal>
-        <section>
-          <div className="mb-3 flex items-end justify-between">
-            <h2 className="text-xl font-extrabold tracking-tight">Coming up next</h2>
+        <section className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-zinc-900">
+                Curated Events
+              </h2>
+              <p className="text-sm text-zinc-500 mt-0.5">Upcoming performances, conferences, and festivals</p>
+            </div>
             <Link
               href="/browse"
-              className="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:underline"
+              className="text-sm font-bold text-zinc-700 hover:text-zinc-900 transition flex items-center gap-1.5"
             >
-              View all →
+              Explore directory
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+
           {featured.length === 0 ? (
-            <div className="card p-10 text-center text-sm text-slate-500 dark:text-slate-400">
-              No events published yet. Organizers:{" "}
-              <Link href="/organizer/onboarding" className="font-semibold text-brand-700 dark:text-brand-300">
-                create one
+            <div className="card p-14 text-center text-base text-zinc-500">
+              No events scheduled yet. Organizers can{" "}
+              <Link href="/organizer/onboarding" className="font-bold text-zinc-900 underline underline-offset-2">
+                publish an event
               </Link>
               .
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featured.map((e, i) => {
                 const prices = e.tiers.map((t) => t.pricePs);
                 const capacity = e.tiers.reduce((s, t) => s + t.capacity, 0);
@@ -187,29 +289,55 @@ export default async function HomePage() {
         </section>
       </Reveal>
 
+      {/* 3-Step Lifecycle */}
       <Reveal>
-        <section>
-          <h2 className="mb-3 text-xl font-extrabold tracking-tight">How it works</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              ["1", "🔍", "Find your event", "Search by category, city or date with live availability on every listing."],
-              ["2", "⏳", "Hold & pay", "Tickets are held for 10 minutes while you pay securely — no overselling, ever."],
-              ["3", "📱", "Show your QR", "Your digital pass carries a signed QR code the organizer scans at the gate."],
-            ].map(([num, emoji, title, body]) => (
-              <div
-                key={title}
-                className="card relative p-5 transition hover:-translate-y-0.5 hover:shadow-pop"
-              >
-                <span className="absolute right-4 top-4 select-none text-4xl font-black text-slate-100 dark:text-slate-800">
-                  {num}
+        <section className="space-y-5 pt-6 border-t border-zinc-200/80">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-zinc-900">
+              How TicketFlow Works
+            </h2>
+            <p className="text-sm text-zinc-500 mt-0.5">Reliable ticketing architecture designed for zero overselling</p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="card p-7 space-y-3.5 bg-white border border-zinc-200/80 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900">
+                  <Search className="h-5 w-5" />
                 </span>
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand-50 dark:bg-brand-500/15 text-xl">
-                  {emoji}
-                </div>
-                <div className="mt-3 font-bold">{title}</div>
-                <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{body}</p>
+                <span className="text-2xl font-black text-zinc-300">01</span>
               </div>
-            ))}
+              <h3 className="text-base font-bold text-zinc-900">Direct Discovery</h3>
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                Filter events by category, venue, and city with live seating capacity calculated directly from real-time database queries.
+              </p>
+            </div>
+
+            <div className="card p-7 space-y-3.5 bg-white border border-zinc-200/80 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900">
+                  <ShieldCheck className="h-5 w-5" />
+                </span>
+                <span className="text-2xl font-black text-zinc-300">02</span>
+              </div>
+              <h3 className="text-base font-bold text-zinc-900">Atomic Reservation</h3>
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                When you initiate checkout, seats are reserved with a 10-minute hold window. Two buyers racing for the last seat will never cause overselling.
+              </p>
+            </div>
+
+            <div className="card p-7 space-y-3.5 bg-white border border-zinc-200/80 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900">
+                  <QrCode className="h-5 w-5" />
+                </span>
+                <span className="text-2xl font-black text-zinc-300">03</span>
+              </div>
+              <h3 className="text-base font-bold text-zinc-900">Cryptographic QR Pass</h3>
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                Each digital pass includes a signed HMAC token. Organizers scan attendees at the door with instant duplicate detection and offline fallback.
+              </p>
+            </div>
           </div>
         </section>
       </Reveal>

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { MapPin, Users, Zap } from "lucide-react";
+import {
+  MapPin, Calendar, Users, Zap, Music, Terminal, Trophy, Mic,
+  Drama, Utensils, Briefcase, Palette, Heart, Compass
+} from "lucide-react";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { fmtMoney } from "@/lib/money";
-import { CATEGORY_EMOJI } from "@/lib/format";
 
 export type EventCardData = {
   slug: string;
@@ -20,76 +22,106 @@ export type EventCardData = {
   verified?: boolean;
 };
 
-const GRADIENTS = [
-  "from-brand-500 to-purple-600",
-  "from-rose-500 to-orange-500",
-  "from-emerald-500 to-teal-600",
-  "from-sky-500 to-indigo-600",
-  "from-amber-500 to-pink-600",
-  "from-violet-500 to-fuchsia-600",
-];
+export function CategoryIcon({ category, className = "h-4 w-4" }: { category: string; className?: string }) {
+  switch (category) {
+    case "Music": return <Music className={className} />;
+    case "Tech": return <Terminal className={className} />;
+    case "Sports": return <Trophy className={className} />;
+    case "Comedy": return <Mic className={className} />;
+    case "Theatre": return <Drama className={className} />;
+    case "Food": return <Utensils className={className} />;
+    case "Business": return <Briefcase className={className} />;
+    case "Art": return <Palette className={className} />;
+    case "Wellness": return <Heart className={className} />;
+    default: return <Compass className={className} />;
+  }
+}
 
-export function EventCard({ event, index = 0 }: { event: EventCardData; index?: number }) {
-  const gradient = GRADIENTS[index % GRADIENTS.length];
+export function EventCard({ event }: { event: EventCardData; index?: number }) {
+  const isFree = !event.minPricePs || event.minPricePs === 0;
+
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="card group overflow-hidden transition duration-200 hover:-translate-y-1 hover:border-brand-200 dark:hover:border-brand-500/60 hover:shadow-pop"
+      className="card group flex flex-col overflow-hidden bg-white border border-zinc-200/90 hover:border-zinc-400 hover:shadow-md transition-all duration-200 rounded-2xl"
     >
-      <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${gradient}`}>
+      {/* Visual Asset Container */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100 border-b border-zinc-100">
         {event.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={event.bannerUrl}
-            alt=""
+            alt={event.title}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="grid h-full place-items-center text-5xl opacity-80 transition duration-300 group-hover:scale-110">
-            {CATEGORY_EMOJI[event.category] ?? "🎟️"}
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2.5 text-zinc-400">
+            <CategoryIcon category={event.category} className="h-12 w-12 text-zinc-300 stroke-[1.25]" />
+            <span className="text-xs font-bold tracking-wider uppercase text-zinc-500">{event.category}</span>
           </div>
         )}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10" />
-        <div className="absolute left-2 top-2 flex gap-1">
-          <span className="chip bg-white/90 text-slate-700">{event.category}</span>
+
+        {/* Status badges */}
+        <div className="absolute left-3.5 top-3.5 flex flex-wrap gap-2">
+          <span className="chip bg-white/95 text-zinc-850 backdrop-blur shadow-sm border border-zinc-200/60 text-xs font-semibold px-3 py-1">
+            {event.category}
+          </span>
           {event.liveMode && (
-            <span className="chip animate-pulseSoft bg-rose-600 text-white">
-              <Zap className="h-3 w-3" /> LIVE
+            <span className="chip bg-rose-600 text-white font-bold flex items-center gap-1.5 shadow-sm text-xs px-2.5 py-1">
+              <span className="h-1.5 w-1.5 bg-white shrink-0" />
+              LIVE
             </span>
           )}
         </div>
+
         {event.soldOut && (
-          <span className="chip absolute right-2 top-2 bg-slate-900/80 text-white">Sold out</span>
+          <div className="absolute right-3.5 top-3.5">
+            <span className="chip bg-zinc-900 text-white font-semibold text-xs px-3 py-1 shadow-sm">
+              Sold Out
+            </span>
+          </div>
         )}
       </div>
-      <div className="space-y-1.5 p-4">
-        <div className="line-clamp-1 font-bold leading-tight transition group-hover:text-brand-700 dark:group-hover:text-brand-300">{event.title}</div>
-        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-          <MapPin className="h-3.5 w-3.5" /> {event.venueName}, {event.city}
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col justify-between p-5 space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-600">
+            <Calendar className="h-4 w-4 text-zinc-400 shrink-0" />
+            <span>{fmtDate(event.startsAt)} · {fmtTime(event.startsAt)}</span>
+          </div>
+
+          <h3 className="line-clamp-2 text-lg font-extrabold text-zinc-900 leading-snug group-hover:text-brand-600 transition duration-150">
+            {event.title}
+          </h3>
+
+          <div className="flex items-center gap-2 text-sm text-zinc-600">
+            <MapPin className="h-4 w-4 text-zinc-400 shrink-0" />
+            <span className="truncate">{event.venueName}, {event.city}</span>
+          </div>
         </div>
-        <div className="text-xs font-semibold text-brand-700 dark:text-brand-300">
-          {fmtDate(event.startsAt)} · {fmtTime(event.startsAt)}
-        </div>
-        <div className="flex items-center justify-between pt-1">
-          {event.minPricePs !== undefined && event.minPricePs > 0 ? (
-            <div className="text-sm">
-              <span className="text-slate-500 dark:text-slate-400">from </span>
-              <span className="font-bold">{fmtMoney(event.minPricePs)}</span>
-            </div>
-          ) : (
-            <div className="text-sm font-bold text-emerald-600 dark:text-emerald-300">Free</div>
-          )}
-          {event.soldPct !== undefined && event.soldPct > 0 && (
-            <span className="badge-amber">
-              <Users className="h-3 w-3" /> {event.soldPct}% booked
+
+        {/* Footer: Pricing and Availability */}
+        <div className="flex items-end justify-between border-t border-zinc-100 pt-3.5">
+          <div>
+            <span className="text-xs uppercase tracking-wider text-zinc-400 font-bold block leading-tight mb-0.5">
+              Tickets From
+            </span>
+            <span className="text-lg font-black text-zinc-900">
+              {isFree ? "Free Admission" : fmtMoney(event.minPricePs!)}
+            </span>
+          </div>
+
+          {event.soldPct !== undefined && !event.soldOut && (
+            <span className="text-xs sm:text-sm font-semibold text-zinc-600">
+              {event.soldPct > 80 ? (
+                <span className="text-rose-600 font-bold">Almost full</span>
+              ) : (
+                <span>{100 - event.soldPct}% available</span>
+              )}
             </span>
           )}
         </div>
-        {event.organizer && (
-          <div className="truncate border-t border-slate-100 dark:border-slate-800 pt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-            by {event.organizer} {event.verified && <span className="text-emerald-600 dark:text-emerald-300">✓ verified</span>}
-          </div>
-        )}
       </div>
     </Link>
   );

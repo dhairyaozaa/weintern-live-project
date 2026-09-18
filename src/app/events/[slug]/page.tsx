@@ -5,9 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   CalendarDays, Clock, MapPin, ShieldCheck, Ticket, Users, Zap, Loader2,
+  Bell, AlertCircle, ArrowLeft
 } from "lucide-react";
-import { fmtDateLong, fmtTime, CATEGORY_EMOJI } from "@/lib/format";
+import { fmtDateLong, fmtTime } from "@/lib/format";
 import { fmtMoney } from "@/lib/money";
+import { CategoryIcon } from "@/components/event-card";
 import { ProgressBar, Spinner, Toast } from "@/components/ui";
 
 type Tier = {
@@ -53,7 +55,7 @@ export default function EventDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Live availability over SSE — reconnects automatically by browser.
+  // Live availability over SSE
   useEffect(() => {
     if (!event) return;
     const es = new EventSource(`/api/events/${slug}/stream`);
@@ -80,10 +82,10 @@ export default function EventDetailPage() {
         body: JSON.stringify({ tierId, quantity }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not reserve");
+      if (!res.ok) throw new Error(data.error || "Could not reserve ticket");
       router.push(`/checkout/${data.booking.reference}`);
     } catch (err) {
-      setToast({ msg: err instanceof Error ? err.message : "Failed", tone: "error" });
+      setToast({ msg: err instanceof Error ? err.message : "Failed to reserve ticket", tone: "error" });
       load();
     } finally {
       setBuying(null);
@@ -102,155 +104,227 @@ export default function EventDetailPage() {
         if (res.status === 401) return router.push("/login?next=" + encodeURIComponent(`/events/${slug}`));
         throw new Error(data.error);
       }
-      setToast({ msg: "You're on the waitlist — we'll ping you when tickets open up!", tone: "success" });
+      setToast({ msg: "You have been added to the waitlist. We will notify you if tickets open up.", tone: "success" });
     } catch (err) {
-      setToast({ msg: err instanceof Error ? err.message : "Failed", tone: "error" });
+      setToast({ msg: err instanceof Error ? err.message : "Failed to join waitlist", tone: "error" });
     }
   }
 
-  if (loading) return <Spinner label="Loading event…" />;
+  if (loading) return <Spinner label="Loading event details..." />;
   if (error || !event)
     return (
-      <div className="card mx-auto max-w-md p-8 text-center">
-        <div className="text-4xl">🎪</div>
-        <h1 className="mt-2 text-lg font-bold">{error || "Event not found"}</h1>
-        <Link href="/browse" className="btn-primary mt-4">Browse events</Link>
+      <div className="card mx-auto max-w-md p-10 text-center bg-white border border-zinc-200/80 rounded-2xl">
+        <AlertCircle className="mx-auto h-12 w-12 text-zinc-400" />
+        <h1 className="mt-4 text-xl font-bold text-zinc-900">{error || "Event not found"}</h1>
+        <p className="mt-2 text-sm text-zinc-600">The event you are looking for may have been unpublished or removed.</p>
+        <Link href="/browse" className="btn btn-primary mt-6 text-sm">
+          <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Directory
+        </Link>
       </div>
     );
 
   const isUpcoming = new Date(event.startsAt) > new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {toast && <Toast message={toast.msg} tone={toast.tone} />}
 
-      {/* Banner */}
-      <div className="card overflow-hidden">
-        <div className="relative h-52 bg-gradient-to-br from-brand-600 to-purple-600 md:h-64">
-          {event.bannerUrl && (
+      <div className="flex items-center gap-2 text-sm text-zinc-500">
+        <Link href="/browse" className="hover:text-zinc-900 transition flex items-center gap-1.5 font-medium">
+          <ArrowLeft className="h-4 w-4" /> Browse Events
+        </Link>
+        <span>/</span>
+        <span className="text-zinc-900 font-semibold truncate">{event.title}</span>
+      </div>
+
+      {/* Main Container */}
+      <div className="card overflow-hidden bg-white border border-zinc-200/80 shadow-card rounded-3xl">
+        {/* Banner Area */}
+        <div className="relative h-64 sm:h-80 lg:h-96 w-full overflow-hidden bg-zinc-100 border-b border-zinc-200/60">
+          {event.bannerUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.bannerUrl} alt="" className="h-full w-full object-cover" />
+            <img src={event.bannerUrl} alt={event.title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-zinc-400">
+              <CategoryIcon category={event.category} className="h-16 w-16 text-zinc-300 stroke-[1.2]" />
+              <span className="text-sm font-bold tracking-wider uppercase text-zinc-500">{event.category} Event</span>
+            </div>
           )}
-          <div className="absolute left-4 top-4 flex gap-2">
-            <span className="chip bg-white/90 text-slate-800">
-              {CATEGORY_EMOJI[event.category] ?? "🎟️"} {event.category}
+
+          <div className="absolute left-5 top-5 flex flex-wrap gap-2.5">
+            <span className="chip bg-white/95 text-zinc-900 backdrop-blur shadow-sm border border-zinc-200/60 text-sm font-bold px-3.5 py-1.5">
+              {event.category}
             </span>
             {event.liveMode && (
-              <span className="chip animate-pulseSoft bg-rose-600 text-white">
-                <Zap className="h-3 w-3" /> Happening now
+              <span className="chip bg-rose-600 text-white font-bold flex items-center gap-1.5 shadow-sm text-sm px-3 py-1.5">
+                <span className="h-1.5 w-1.5 bg-white shrink-0" />
+                LIVE NOW
               </span>
             )}
-            {event.soldOut && <span className="chip bg-slate-900/80 text-white">Sold out</span>}
+            {event.soldOut && (
+              <span className="chip bg-zinc-900 text-white font-bold text-sm px-3.5 py-1.5 shadow-sm">
+                Sold Out
+              </span>
+            )}
           </div>
         </div>
-        <div className="grid gap-6 p-6 md:grid-cols-[1fr_340px]">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-2xl font-extrabold md:text-3xl">{event.title}</h1>
-              <div className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                by <span className="font-semibold text-slate-700 dark:text-slate-200">{event.organizer}</span>
+
+        {/* Detail Body */}
+        <div className="grid gap-10 p-7 sm:p-10 lg:grid-cols-[1fr_400px]">
+          {/* Left Column: Description & Metadata */}
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.15]">
+                {event.title}
+              </h1>
+
+              <div className="flex items-center gap-2.5 text-sm sm:text-base text-zinc-600">
+                <span>Presented by</span>
+                <span className="font-bold text-zinc-900">{event.organizer}</span>
                 {event.verified && (
-                  <span className="badge-green"><ShieldCheck className="h-3 w-3" /> Verified organizer</span>
+                  <span className="badge-green inline-flex items-center gap-1.5 py-1 px-2.5 text-xs">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Verified Organizer
+                  </span>
                 )}
               </div>
             </div>
 
-            <div className="grid gap-2 text-sm md:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-brand-600" />
-                {fmtDateLong(event.startsAt)}
+            {/* Time / Venue Grid */}
+            <div className="grid gap-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 p-5 sm:grid-cols-2 text-sm sm:text-base">
+              <div className="flex items-start gap-3 text-zinc-700">
+                <CalendarDays className="h-5 w-5 text-zinc-500 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-zinc-900">{fmtDateLong(event.startsAt)}</div>
+                  <div className="text-sm text-zinc-600 mt-0.5">{fmtTime(event.startsAt)} – {fmtTime(event.endsAt)}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-brand-600" />
-                {fmtTime(event.startsAt)} – {fmtTime(event.endsAt)}
+
+              <div className="flex items-start gap-3 text-zinc-700">
+                <MapPin className="h-5 w-5 text-zinc-500 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-zinc-900">{event.venueName}</div>
+                  <div className="text-sm text-zinc-600 mt-0.5">{event.city}{event.address ? ` · ${event.address}` : ""}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-brand-600" />
-                {event.venueName}, {event.city}
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-brand-600" />
-                {stats.totalSold}/{stats.totalCapacity} booked · {stats.fillPct}% full
+
+              <div className="flex items-center gap-3 text-zinc-700 sm:col-span-2 pt-3 border-t border-zinc-200/70 text-sm font-semibold">
+                <Users className="h-5 w-5 text-zinc-500 shrink-0" />
+                <div>
+                  <span className="font-black text-zinc-900">{stats.totalSold}</span> of {stats.totalCapacity} capacity booked ({stats.fillPct}% full)
+                </div>
               </div>
             </div>
 
-            <div>
-              <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">About this event</h2>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">{event.description}</p>
+            {/* About Section */}
+            <div className="space-y-3">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">About this event</h2>
+              <p className="whitespace-pre-line text-base sm:text-lg leading-relaxed text-zinc-700 font-normal">
+                {event.description}
+              </p>
             </div>
 
             {event.organizerAbout && (
-              <div className="card bg-slate-50 dark:bg-slate-800/60 p-4">
-                <div className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">About the organizer</div>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{event.organizerAbout}</p>
+              <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">About the Host</div>
+                <p className="text-sm sm:text-base leading-relaxed text-zinc-600">{event.organizerAbout}</p>
+                {event.supportEmail && (
+                  <div className="text-sm text-zinc-500 pt-2">
+                    Inquiries: <span className="font-semibold text-zinc-900">{event.supportEmail}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Buy box */}
-          <div className="space-y-3">
-            <div className="card sticky top-20 space-y-3 p-4">
-              <div className="flex items-baseline justify-between">
+          {/* Right Column: Ticket Tiers & Buy Box */}
+          <div>
+            <div className="card sticky top-24 space-y-5 p-6 sm:p-7 bg-white border border-zinc-200/90 shadow-md rounded-2xl">
+              <div className="flex items-baseline justify-between border-b border-zinc-100 pb-4">
                 <div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Starting from</div>
-                  <div className="text-2xl font-extrabold">{fmtMoney(stats.minPricePs ?? 0)}</div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 block mb-1">Pricing</span>
+                  <div className="text-2xl sm:text-3xl font-black text-zinc-900">
+                    {stats.minPricePs === 0 ? "Free Admission" : fmtMoney(stats.minPricePs)}
+                  </div>
                 </div>
-                {event.status === "PAUSED" && <span className="badge-amber">Sales paused</span>}
-                {event.liveMode && <span className="badge-red">LIVE</span>}
+                {event.status === "PAUSED" && <span className="badge-amber text-xs font-bold">Sales Paused</span>}
+                {event.liveMode && <span className="badge-red font-bold text-xs">LIVE</span>}
               </div>
 
-              {tiers.map((tier) => (
-                <div key={tier.id} className={`rounded-lg border p-3 ${tier.soldOut ? "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 opacity-70" : "border-slate-200 dark:border-slate-800"}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-sm font-bold">{tier.name}</div>
-                      {tier.description && <div className="text-xs text-slate-500 dark:text-slate-400">{tier.description}</div>}
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{fmtMoney(tier.pricePs)}</div>
-                      <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                        {tier.remaining > 0 ? `${tier.remaining} left` : "sold out"}
+              {/* Tiers List */}
+              <div className="space-y-4">
+                {tiers.map((tier) => (
+                  <div
+                    key={tier.id}
+                    className={`rounded-xl border p-4.5 transition ${
+                      tier.soldOut
+                        ? "border-zinc-100 bg-zinc-50 opacity-60"
+                        : "border-zinc-200 hover:border-zinc-300 bg-white shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm sm:text-base font-bold text-zinc-900">{tier.name}</div>
+                        {tier.description && (
+                          <div className="text-xs sm:text-sm text-zinc-500 mt-1">{tier.description}</div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-base sm:text-lg font-black text-zinc-900">{fmtMoney(tier.pricePs)}</div>
+                        <div className="text-xs font-semibold text-zinc-500 mt-0.5">
+                          {tier.remaining > 0 ? `${tier.remaining} left` : "Sold out"}
+                        </div>
                       </div>
                     </div>
+
+                    <ProgressBar pct={tier.fillPct} className="mt-3.5" />
+
+                    {!tier.soldOut && event.status === "PUBLISHED" && (
+                      <div className="mt-4 flex items-center gap-2.5">
+                        <select
+                          className="input w-auto py-2 text-sm font-semibold rounded-lg"
+                          value={qty[tier.id] ?? 1}
+                          onChange={(e) => setQty({ ...qty, [tier.id]: Number(e.target.value) })}
+                        >
+                          {Array.from({ length: Math.min(tier.perUserLimit, tier.remaining) }, (_, i) => i + 1).map((n) => (
+                            <option key={n} value={n}>{n} {n === 1 ? "ticket" : "tickets"}</option>
+                          ))}
+                        </select>
+                        <button
+                          className="btn btn-primary flex-1 text-sm py-2.5 font-bold rounded-lg"
+                          disabled={buying === tier.id}
+                          onClick={() => reserve(tier.id)}
+                        >
+                          {buying === tier.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Ticket className="h-4 w-4 mr-1.5" />
+                          )}
+                          Reserve & Checkout
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <ProgressBar pct={tier.fillPct} className="mt-2" />
-                  {!tier.soldOut && event.status === "PUBLISHED" && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <select
-                        className="input w-auto py-1 text-sm"
-                        value={qty[tier.id] ?? 1}
-                        onChange={(e) => setQty({ ...qty, [tier.id]: Number(e.target.value) })}
-                      >
-                        {Array.from({ length: Math.min(tier.perUserLimit, tier.remaining) }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>{n}</option>
-                        ))}
-                      </select>
-                      <button
-                        className="btn-primary flex-1"
-                        disabled={buying === tier.id}
-                        onClick={() => reserve(tier.id)}
-                      >
-                        {buying === tier.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}
-                        Book now
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
 
               {event.soldOut && event.status === "PUBLISHED" && (
-                <button className="btn-secondary w-full" onClick={joinWaitlist}>
-                  🔔 Join waitlist
+                <button
+                  className="btn btn-secondary w-full text-sm font-bold py-3 rounded-xl"
+                  onClick={joinWaitlist}
+                >
+                  <Bell className="h-4 w-4 mr-2" /> Join Waitlist
                 </button>
               )}
+
               {!isUpcoming && (
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3 text-center text-sm text-slate-500 dark:text-slate-400">
-                  This event has already started or ended.
+                <div className="rounded-xl bg-zinc-100 p-4 text-center text-sm font-medium text-zinc-600">
+                  This event has already commenced or concluded.
                 </div>
               )}
-              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
-                Tickets are held for 10 minutes during checkout · <Link href="/login" className="underline">sign in required</Link>
-              </p>
+
+              <div className="pt-2 text-center text-xs text-zinc-500 leading-relaxed border-t border-zinc-100 font-medium">
+                Tickets are locked for 10 minutes during checkout to guarantee your seat without conflict.
+              </div>
             </div>
           </div>
         </div>

@@ -7,21 +7,21 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
+          50: "#fff1f2",
+          100: "#ffe4e6",
+          200: "#fecdd3",
+          300: "#fda4af",
+          400: "#fb7185",
+          500: "#f43f5e",
+          600: "#e11d48", // Crimson-coral accent
+          700: "#be123c",
+          800: "#9f1239",
+          900: "#881337",
         },
       },
       boxShadow: {
-        card: "0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.1)",
-        pop: "0 12px 32px -8px rgba(16,24,40,.18)",
+        card: "0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03)",
+        pop: "0 10px 24px -4px rgba(0, 0, 0, 0.06), 0 4px 8px -4px rgba(0, 0, 0, 0.03)",
       },
       keyframes: {
         pulseSoft: { "0%,100%": { opacity: "1" }, "50%": { opacity: ".45" } },

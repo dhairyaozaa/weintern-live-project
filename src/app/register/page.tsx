@@ -36,31 +36,73 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="card p-6">
-        <h1 className="text-xl font-extrabold">Create your account</h1>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Book tickets in seconds — no card needed to sign up</p>
-        {toast && <div className="mb-3"><Toast message={toast.msg} tone={toast.tone} /></div>}
-        <form onSubmit={submit} className="space-y-3">
+    <div className="mx-auto max-w-md py-6">
+      <div className="card p-6 sm:p-8 bg-white border border-zinc-200/80 shadow-card space-y-4">
+        <div className="flex items-center gap-3.5 pb-2 border-b border-zinc-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="TicketFlow" className="h-11 w-11 object-contain rounded-xl shadow-xs shrink-0" />
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900">Create an account</h1>
+            <p className="mt-0.5 text-xs text-zinc-500">Book tickets in seconds and manage digital passes</p>
+          </div>
+        </div>
+
+        {toast && <Toast message={toast.msg} tone={toast.tone} />}
+
+        <form onSubmit={submit} className="space-y-3.5 pt-1">
           <div>
             <label className="label">Full name</label>
-            <input className="input" required minLength={2} value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya Sharma" />
+            <input
+              className="input text-xs"
+              required
+              minLength={2}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Maya Chen"
+            />
           </div>
+
           <div>
-            <label className="label">Email</label>
-            <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+            <label className="label">Email address</label>
+            <input
+              className="input text-xs"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
           </div>
+
           <div>
-            <label className="label">Password</label>
-            <input className="input" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
+            <label className="label">Password (min. 6 characters)</label>
+            <input
+              className="input text-xs"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
           </div>
-          <button className="btn-primary w-full" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />} Create account
+
+          <button
+            type="submit"
+            className="btn btn-primary w-full text-xs font-semibold py-2.5 mt-2"
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+            Create Account
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          Already have an account? <Link href="/login" className="font-semibold text-brand-700 dark:text-brand-300 hover:underline">Sign in</Link>
-        </p>
+
+        <div className="pt-2 text-center text-xs text-zinc-500 border-t border-zinc-100">
+          Already have an account?{" "}
+          <Link href="/login" className="font-semibold text-zinc-900 underline underline-offset-2">
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   );

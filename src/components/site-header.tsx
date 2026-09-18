@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { flushSync } from "react-dom";
-import { Bell, CalendarDays, LayoutDashboard, LogOut, Moon, Search, Shield, Sparkles, Sun, Ticket } from "lucide-react";
+import { Bell, CalendarDays, LayoutDashboard, LogOut, Search, Shield, Ticket, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -38,42 +37,6 @@ export function SiteHeader() {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
   const [q, setQ] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
-  }, []);
-
-  function toggleTheme() {
-    const next = theme === "dark" ? "light" : "dark";
-    const root = document.documentElement;
-    const btn = document.querySelector<HTMLButtonElement>('button[aria-label="Toggle dark mode"]');
-
-    const apply = () => {
-      root.classList.toggle("dark", next === "dark");
-      try {
-        localStorage.setItem("theme", next);
-      } catch {}
-      setTheme(next);
-    };
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => void;
-    };
-    if (!doc.startViewTransition || reduced) {
-      apply();
-      return;
-    }
-    const rect = btn?.getBoundingClientRect();
-    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
-    const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
-    root.style.setProperty("--vt-x", `${x}px`);
-    root.style.setProperty("--vt-y", `${y}px`);
-    doc.startViewTransition(() => {
-      flushSync(apply);
-    });
-  }
 
   useEffect(() => {
     if (!me) return;
@@ -90,98 +53,129 @@ export function SiteHeader() {
     router.refresh();
   }
 
-  return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/80 backdrop-blur no-print">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <Link href="/" className="flex items-center gap-2 font-extrabold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">
-            <Ticket className="h-5 w-5" />
-          </span>
-          <span className="text-lg">
-            Ticket<span className="text-brand-600">Flow</span>
-          </span>
-        </Link>
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!q.trim()) return;
+    router.push(`/browse?q=${encodeURIComponent(q.trim())}`);
+  }
 
-        <nav className="ml-4 hidden items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300 md:flex">
-          <Link href="/browse" className={`rounded-lg px-3 py-2 hover:bg-slate-100 ${pathname === "/browse" ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100" : ""}`}>
-            Browse events
+  return (
+    <header className="sticky top-0 z-40 h-20 border-b border-zinc-200/80 bg-white/95 backdrop-blur no-print">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
+        {/* Left: Brand logo */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-3 font-bold tracking-tight text-zinc-900 group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.webp"
+              alt="TicketFlow"
+              className="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-xl transition duration-200 group-hover:scale-105 shadow-xs"
+            />
+            <span className="text-xl font-extrabold tracking-tight">TicketFlow</span>
           </Link>
-          {me?.role === "CUSTOMER" && (
+
+          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-zinc-600">
+            <Link
+              href="/browse"
+              className={`transition hover:text-zinc-900 ${pathname === "/browse" ? "text-zinc-900 font-bold" : ""}`}
+            >
+              Browse Events
+            </Link>
             <Link
               href="/organizer/onboarding"
-              className="flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-slate-100"
+              className={`transition hover:text-zinc-900 ${pathname?.startsWith("/organizer") ? "text-zinc-900 font-bold" : ""}`}
             >
-              <Sparkles className="h-4 w-4 text-brand-600" /> Become an organizer
+              Host an Event
             </Link>
-          )}
-          {(me?.role === "ORGANIZER" || me?.role === "ADMIN") && (
-            <Link href="/organizer" className={`flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-slate-100 ${pathname.startsWith("/organizer") ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100" : ""}`}>
-              <LayoutDashboard className="h-4 w-4" /> Organizer
-            </Link>
-          )}
-          {me?.role === "ADMIN" && (
-            <Link href="/admin" className={`flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-slate-100 ${pathname.startsWith("/admin") ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100" : ""}`}>
-              <Shield className="h-4 w-4" /> Admin
-            </Link>
-          )}
-        </nav>
+          </nav>
+        </div>
 
-        <form
-          className="ml-auto hidden max-w-xs flex-1 md:block"
-          onSubmit={(e) => {
-            e.preventDefault();
-            router.push(`/browse?q=${encodeURIComponent(q)}`);
-          }}
-        >
+        {/* Center: Search input */}
+        <form onSubmit={handleSearch} className="hidden sm:block flex-1 max-w-md">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+            <Search className="absolute left-3.5 top-3 h-4.5 w-4.5 text-zinc-400" />
             <input
+              type="search"
+              placeholder="Search concerts, festivals, conferences..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search events, venues…"
-              className="input pl-9"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/80 py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           </div>
         </form>
 
-        <div className="ml-auto flex items-center gap-2 md:ml-0">
-          <button
-            onClick={toggleTheme}
-            className="btn-ghost px-2"
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            aria-label="Toggle dark mode"
-          >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-          {loading ? (
-            <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
-          ) : me ? (
+        {/* Right: Actions / Auth */}
+        <div className="flex items-center gap-3">
+          {me ? (
             <>
-              <Link href="/notifications" className="relative rounded-lg p-2 hover:bg-slate-100" title="Notifications">
-                <Bell className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              {me.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  className="btn btn-secondary text-sm py-2 px-3.5"
+                  title="Admin Dashboard"
+                >
+                  <Shield className="h-4 w-4 text-brand-600 mr-1" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
+              {me.role === "ORGANIZER" && (
+                <Link
+                  href="/organizer"
+                  className="btn btn-secondary text-sm py-2 px-3.5"
+                  title="Organizer Dashboard"
+                >
+                  <LayoutDashboard className="h-4 w-4 text-zinc-700 mr-1" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              )}
+
+              <Link
+                href="/bookings"
+                className="btn btn-ghost text-sm py-2 px-3"
+                title="My Bookings"
+              >
+                <CalendarDays className="h-4.5 w-4.5 text-zinc-600 mr-1.5" />
+                <span className="hidden sm:inline">My Tickets</span>
+              </Link>
+
+              <Link
+                href="/notifications"
+                className="relative grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
                 {unread > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
-                    {unread > 9 ? "9+" : unread}
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-bold text-white shadow-sm">
+                    {unread}
                   </span>
                 )}
               </Link>
-              <Link href="/bookings" className="btn-secondary" title="My bookings">
-                <CalendarDays className="h-4 w-4" /> <span className="hidden sm:inline">Bookings</span>
-              </Link>
-              <div className="hidden text-right sm:block">
-                <div className="max-w-[140px] truncate text-sm font-semibold leading-4">{me.name}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{me.role.toLowerCase()}</div>
+
+              <div className="flex items-center gap-3 pl-3 border-l border-zinc-200">
+                <div className="hidden lg:block text-right">
+                  <div className="text-sm font-bold text-zinc-900 leading-tight">{me.name}</div>
+                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">{me.role.toLowerCase()}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="grid h-10 w-10 place-items-center rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4.5 w-4.5" />
+                </button>
               </div>
-              <button onClick={logout} className="btn-ghost px-2" title="Sign out">
-                <LogOut className="h-4 w-4" />
-              </button>
             </>
-          ) : (
-            <>
-              <Link href="/login" className="btn-secondary">Sign in</Link>
-              <Link href="/register" className="btn-primary">Get started</Link>
-            </>
-          )}
+          ) : !loading ? (
+            <div className="flex items-center gap-2.5">
+              <Link href="/login" className="btn btn-ghost text-sm py-2 px-4">
+                Sign In
+              </Link>
+              <Link href="/register" className="btn btn-primary text-sm py-2 px-4.5">
+                Get Started
+              </Link>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

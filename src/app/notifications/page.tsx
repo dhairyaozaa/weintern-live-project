@@ -64,7 +64,7 @@ export default function NotificationsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-bold">{n.title}</span>
-                    {!n.readAt && <span className="h-2 w-2 shrink-0 rounded-full bg-brand-500" />}
+                    {!n.readAt && <span className="h-2 w-2 shrink-0 bg-zinc-900" />}
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-300">{n.body}</p>
                   <span className="text-[11px] text-slate-400 dark:text-slate-500">{fmtDateTime(n.createdAt)}</span>

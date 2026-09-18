@@ -1,9 +1,26 @@
 export const CATEGORY_EMOJI: Record<string, string> = {
-  Music: "🎵", Tech: "💻", Sports: "🏟️", Comedy: "🎤", Theatre: "🎭",
-  Food: "🍜", Business: "💼", Art: "🎨", Wellness: "🧘",
+  Music: "🎵",
+  Tech: "💻",
+  Sports: "🏅",
+  Comedy: "🎙️",
+  Theatre: "🎭",
+  Food: "🍽️",
+  Business: "📊",
+  Art: "🎨",
+  Wellness: "🌱",
 };
 
-export const CATEGORIES = Object.keys(CATEGORY_EMOJI);
+export const CATEGORIES = [
+  "Music",
+  "Tech",
+  "Sports",
+  "Comedy",
+  "Theatre",
+  "Food",
+  "Business",
+  "Art",
+  "Wellness",
+];
 
 export function fmtDate(d: string | Date) {
   return new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
