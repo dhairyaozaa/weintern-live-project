@@ -191,12 +191,12 @@ export default async function HomePage() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
 
-            <div className="animate-table-marquee flex items-stretch">
-              {[...CATEGORIES, ...CATEGORIES, ...CATEGORIES, ...CATEGORIES].map((c, idx) => {
+            <div className="flex items-stretch overflow-x-auto">
+                {CATEGORIES.map((c) => {
                 const count = categoryCounts.get(c) ?? 0;
                 return (
                   <Link
-                    key={`${c}-${idx}`}
+                    key={c}
                     href={`/browse?category=${encodeURIComponent(c)}`}
                     className="group relative flex aspect-square w-36 h-36 sm:w-44 sm:h-44 shrink-0 flex-col justify-between border-r-2 border-dotted border-zinc-300 bg-white p-4 sm:p-5 transition-all duration-150 hover:bg-zinc-50 select-none"
                   >

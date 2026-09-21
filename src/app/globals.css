@@ -144,27 +144,6 @@ body {
   }
 }
 
-/* Table Marquee Infinite Loop */
-@keyframes tableMarquee {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.animate-table-marquee {
-  display: flex;
-  width: max-content;
-  animation: tableMarquee 40s linear infinite;
-  will-change: transform;
-}
-
-.animate-table-marquee:hover {
-  animation-play-state: paused;
-}
-
 /* Beam Sweep Animation */
 @keyframes beamSweep {
   0% {
