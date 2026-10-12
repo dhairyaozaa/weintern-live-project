@@ -5,7 +5,8 @@
   "description": "Event ticketing marketplace: discovery, inventory, payments, QR check-in, analytics",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "predev": "node scripts/db.mjs ensure",
+    "predev": "node scripts/ensure-env.mjs && node scripts/db.mjs ensure",
+    "setup": "node scripts/ensure-env.mjs && node scripts/db.mjs ensure && prisma db push && tsx prisma/seed.ts",
     "build": "prisma generate && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -37,6 +38,7 @@
     "autoprefixer": "10.4.19",
     "bcryptjs": "^2.4.3",
     "embedded-postgres": "^18.4.0-beta.17",
+    "pg": "^8.12.0",
     "postcss": "8.4.39",
     "prisma": "5.16.1",
     "puppeteer-core": "^25.10.0",

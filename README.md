@@ -13,6 +13,7 @@ Built with **Next.js 14 (App Router) · Prisma · PostgreSQL · Tailwind · SSE*
 
 ```bash
 npm install
+npm run setup   # creates .env, boots embedded Postgres, pushes schema, seeds demo data
 npm run dev
 ```
 
