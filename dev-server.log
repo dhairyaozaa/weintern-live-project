@@ -1,0 +1,18 @@
+
+> ticketflow@1.0.0 predev
+> node scripts/db.mjs ensure
+
+✓ database ready (embedded Postgres, data in .pgdata/)
+
+> ticketflow@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 4.3s
+ ○ Compiling /login ...
+ ✓ Compiled /login in 12.1s (548 modules)
+ GET /login 200 in 12591ms
